@@ -1,0 +1,312 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f5ede8; font-family: 'DM Sans', sans-serif; padding: 24px 16px 40px; min-height: 100vh; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; justify-content: center; }
+  .ctrl-btn { padding: 6px 16px; border-radius: 999px; border: 1.5px solid #BFA89E; background: transparent; font-size: 12px; font-family: 'DM Sans', sans-serif; color: #72243E; cursor: pointer; transition: all .2s; font-weight: 500; letter-spacing: .04em; }
+  .ctrl-btn:hover, .ctrl-btn.active { background: #72243E; color: #FDF6F2; border-color: #72243E; }
+  .view-hint { text-align: center; font-size: 11px; color: #A08070; margin-bottom: 20px; letter-spacing: .03em; }
+  .cards-grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+  .card { width: 360px; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 32px rgba(114,36,62,.12), 0 2px 8px rgba(0,0,0,.06); background: #FDF6F2; flex-shrink: 0; position: relative; }
+  .card-cover { background: linear-gradient(145deg, #72243E 0%, #993556 55%, #C0527A 100%); min-height: 480px; display: flex; flex-direction: column; justify-content: space-between; padding: 32px 28px 28px; position: relative; overflow: hidden; }
+  .card-cover::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 20%, rgba(255,255,255,.08) 0%, transparent 60%), radial-gradient(ellipse at 10% 90%, rgba(0,0,0,.12) 0%, transparent 50%); pointer-events: none; }
+  .card-cover::after { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; border-radius: 50%; border: 40px solid rgba(255,255,255,.06); pointer-events: none; }
+  .brand-mark { font-size: 10px; letter-spacing: .18em; color: rgba(255,255,255,.6); font-weight: 500; text-transform: uppercase; }
+  .cover-main { z-index: 1; }
+  .cover-eyebrow { font-size: 11px; letter-spacing: .14em; color: rgba(255,255,255,.65); margin-bottom: 12px; text-transform: uppercase; font-weight: 400; }
+  .cover-title { font-family: 'Playfair Display', serif; font-size: 34px; line-height: 1.18; color: #fff; margin-bottom: 12px; font-weight: 600; }
+  .cover-title em { font-style: italic; font-weight: 400; color: rgba(255,255,255,.85); }
+  .cover-sub { font-size: 13px; color: rgba(255,255,255,.72); line-height: 1.6; margin-bottom: 24px; }
+  .cover-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cover-pill { font-size: 11px; padding: 4px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.3); color: rgba(255,255,255,.8); letter-spacing: .04em; }
+  .cover-footer { z-index: 1; display: flex; justify-content: space-between; align-items: flex-end; }
+  .cover-count { font-size: 42px; font-family: 'Playfair Display', serif; color: rgba(255,255,255,.2); line-height: 1; font-weight: 600; }
+  .cover-logo { font-family: 'Playfair Display', serif; font-size: 13px; color: rgba(255,255,255,.5); letter-spacing: .06em; text-align: right; }
+  .card-avoid, .card-safe, .card-caution { min-height: 520px; display: flex; flex-direction: column; }
+  .card-header { padding: 20px 24px 16px; }
+  .card-avoid .card-header { background: linear-gradient(135deg, #A32D2D 0%, #C94444 100%); }
+  .card-safe .card-header { background: linear-gradient(135deg, #085041 0%, #1D9E75 100%); }
+  .card-caution .card-header { background: linear-gradient(135deg, #633806 0%, #BA7517 100%); }
+  .header-label { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.6); margin-bottom: 6px; }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 22px; color: #fff; font-weight: 600; line-height: 1.2; }
+  .header-sub { font-size: 11px; color: rgba(255,255,255,.7); margin-top: 6px; }
+  .card-body-items { flex: 1; padding: 4px 0; }
+  .ingredient-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 20px; border-bottom: 0.5px solid #F0E6DF; }
+  .ingredient-item:last-child { border-bottom: none; }
+  .item-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .icon-avoid { background: #FCEBEB; }
+  .icon-caution { background: #FAEEDA; }
+  .icon-safe { background: #E1F5EE; }
+  .item-text { flex: 1; }
+  .item-name { font-size: 13px; font-weight: 500; color: #2A1A1A; margin-bottom: 1px; }
+  .item-inci { font-size: 10px; color: #A08070; margin-bottom: 4px; letter-spacing: .02em; }
+  .item-note { font-size: 11px; color: #5C3F3F; line-height: 1.5; }
+  .item-badge { font-size: 9px; font-weight: 500; padding: 2px 7px; border-radius: 999px; letter-spacing: .04em; flex-shrink: 0; margin-top: 3px; }
+  .badge-avoid { background: #FCEBEB; color: #A32D2D; }
+  .badge-caution { background: #FAEEDA; color: #633806; }
+  .badge-safe { background: #E1F5EE; color: #085041; }
+  .card-footer-strip { background: #FDF6F2; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-top: 0.5px solid #F0E6DF; }
+  .footer-brand { font-family: 'Playfair Display', serif; font-size: 12px; color: #BFA89E; letter-spacing: .06em; }
+  .footer-page { font-size: 10px; color: #C4A898; }
+  .card-tip { background: linear-gradient(160deg, #FDF0E8 0%, #FBE8F0 100%); min-height: 320px; display: flex; flex-direction: column; justify-content: space-between; padding: 28px 24px 24px; }
+  .tip-eyebrow { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: #BFA89E; margin-bottom: 16px; }
+  .tip-title { font-family: 'Playfair Display', serif; font-size: 20px; color: #72243E; line-height: 1.3; margin-bottom: 16px; font-weight: 600; }
+  .tip-list { list-style: none; flex: 1; }
+  .tip-list li { display: flex; gap: 10px; margin-bottom: 10px; font-size: 12px; color: #4A2828; line-height: 1.5; align-items: flex-start; }
+  .tip-list li::before { content: '✦'; color: #C0527A; font-size: 10px; flex-shrink: 0; margin-top: 1px; }
+  .tip-cta { background: #72243E; color: #fff; border-radius: 10px; padding: 12px 16px; text-align: center; margin-top: 16px; }
+  .tip-cta-main { font-size: 13px; font-weight: 500; letter-spacing: .02em; }
+  .tip-cta-sub { font-size: 10px; color: rgba(255,255,255,.7); margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button class="ctrl-btn active" onclick="showAll()">全部圖卡</button>
+  <button class="ctrl-btn" onclick="showOne('c-cover')">封面</button>
+  <button class="ctrl-btn" onclick="showOne('c-avoid')">禁用成分</button>
+  <button class="ctrl-btn" onclick="showOne('c-caution')">謹慎成分</button>
+  <button class="ctrl-btn" onclick="showOne('c-safe')">安全成分</button>
+  <button class="ctrl-btn" onclick="showOne('c-tip')">使用提醒</button>
+</div>
+<div class="view-hint">截圖各張圖卡後，私訊傳送給留言「清單」的媽媽</div>
+
+<div class="cards-grid" id="grid">
+
+  <!-- CARD 1: Cover -->
+  <div class="card" id="c-cover">
+    <div class="card-cover">
+      <div class="brand-mark">Maternea 媽咪莉娜</div>
+      <div class="cover-main">
+        <div class="cover-eyebrow">孕期保養 · 成分指南</div>
+        <div class="cover-title">孕期成分<br><em>安全對照表</em></div>
+        <div class="cover-sub">幫你把關每一支保養品<br>讓你孕期也能好好照顧自己</div>
+        <div class="cover-pills">
+          <span class="cover-pill">🚫 禁用成分</span>
+          <span class="cover-pill">⚠️ 謹慎成分</span>
+          <span class="cover-pill">✅ 安全成分</span>
+        </div>
+      </div>
+      <div class="cover-footer">
+        <div class="cover-count">26</div>
+        <div class="cover-logo">Maternea<br>媽咪莉娜</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 2: Avoid -->
+  <div class="card card-avoid" id="c-avoid">
+    <div class="card-header">
+      <div class="header-label">孕期請避免 · 1 of 3</div>
+      <div class="header-title">🚫 建議完全停用</div>
+      <div class="header-sub">這些成分在孕期有潛在風險，建議立刻停用</div>
+    </div>
+    <div class="card-body-items">
+      <div class="ingredient-item">
+        <div class="item-icon icon-avoid">🧴</div>
+        <div class="item-text">
+          <div class="item-name">維A酸 / 視黃醇</div>
+          <div class="item-inci">Retinol · Retinoic Acid · Tretinoin</div>
+          <div class="item-note">抗老精華常見成分，高劑量已證實對胎兒有致畸風險，孕期全面停用。</div>
+        </div>
+        <span class="item-badge badge-avoid">停用</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-avoid">💧</div>
+        <div class="item-text">
+          <div class="item-name">水楊酸</div>
+          <div class="item-inci">Salicylic Acid · BHA</div>
+          <div class="item-note">痘痘、去角質產品常見。孕早期尤其敏感，建議替換為更溫和的替代品。</div>
+        </div>
+        <span class="item-badge badge-avoid">停用</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-avoid">🌸</div>
+        <div class="item-text">
+          <div class="item-name">化學香精</div>
+          <div class="item-inci">Fragrance · Parfum</div>
+          <div class="item-note">孕期皮膚敏感度大幅提高，香精成分複雜，是過敏最常見來源，選無香精產品。</div>
+        </div>
+        <span class="item-badge badge-avoid">停用</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-avoid">☀️</div>
+        <div class="item-text">
+          <div class="item-name">化學防曬劑</div>
+          <div class="item-inci">Oxybenzone · Benzophenone-3</div>
+          <div class="item-note">可穿透皮膚進入血液，孕期改用氧化鋅或二氧化鈦物理性防曬。</div>
+        </div>
+        <span class="item-badge badge-avoid">停用</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-avoid">⚗️</div>
+        <div class="item-text">
+          <div class="item-name">對苯二酚</div>
+          <div class="item-inci">Hydroquinone</div>
+          <div class="item-note">美白淡斑產品常見，孕期吸收率更高，建議改用維他命C替代。</div>
+        </div>
+        <span class="item-badge badge-avoid">停用</span>
+      </div>
+    </div>
+    <div class="card-footer-strip">
+      <span class="footer-brand">Maternea 媽咪莉娜</span>
+      <span class="footer-page">圖卡 2 / 5</span>
+    </div>
+  </div>
+
+  <!-- CARD 3: Caution -->
+  <div class="card card-caution" id="c-caution">
+    <div class="card-header">
+      <div class="header-label">孕期請注意 · 2 of 3</div>
+      <div class="header-title">⚠️ 謹慎使用</div>
+      <div class="header-sub">低劑量或短期使用風險較低，但建議諮詢醫師</div>
+    </div>
+    <div class="card-body-items">
+      <div class="ingredient-item">
+        <div class="item-icon icon-caution">🌿</div>
+        <div class="item-text">
+          <div class="item-name">苯氧乙醇</div>
+          <div class="item-inci">Phenoxyethanol</div>
+          <div class="item-note">1%以下濃度一般安全，選用含量低或天然防腐體系的產品更安心。</div>
+        </div>
+        <span class="item-badge badge-caution">謹慎</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-caution">🫧</div>
+        <div class="item-text">
+          <div class="item-name">高濃度果酸 AHA</div>
+          <div class="item-inci">Glycolic Acid · Lactic Acid</div>
+          <div class="item-note">5%以下日常保濕型相對安全，高濃度換膚療程孕期暫停。乳酸是AHA中孕期接受度最高的選擇。</div>
+        </div>
+        <span class="item-badge badge-caution">低濃度可</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-caution">🌱</div>
+        <div class="item-text">
+          <div class="item-name">視黃醇棕櫚酸酯</div>
+          <div class="item-inci">Retinyl Palmitate</div>
+          <div class="item-note">維A酸的酯化形式，活性較低，低濃度爭議較小，但孕期仍建議謹慎、儘量替換。</div>
+        </div>
+        <span class="item-badge badge-caution">謹慎</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-caution">🧪</div>
+        <div class="item-text">
+          <div class="item-name">Paraben 防腐劑</div>
+          <div class="item-inci">Methylparaben · Propylparaben</div>
+          <div class="item-note">甲基類影響較小，丙、丁類建議避免。選「無Paraben」產品更安心。</div>
+        </div>
+        <span class="item-badge badge-caution">部分避免</span>
+      </div>
+    </div>
+    <div class="card-footer-strip">
+      <span class="footer-brand">Maternea 媽咪莉娜</span>
+      <span class="footer-page">圖卡 3 / 5</span>
+    </div>
+  </div>
+
+  <!-- CARD 4: Safe -->
+  <div class="card card-safe" id="c-safe">
+    <div class="card-header">
+      <div class="header-label">孕期安心使用 · 3 of 3</div>
+      <div class="header-title">✅ 安全成分推薦</div>
+      <div class="header-sub">這些成分孕期可放心使用，保濕修護效果佳</div>
+    </div>
+    <div class="card-body-items">
+      <div class="ingredient-item">
+        <div class="item-icon icon-safe">💎</div>
+        <div class="item-text">
+          <div class="item-name">玻尿酸</div>
+          <div class="item-inci">Hyaluronic Acid · Sodium Hyaluronate</div>
+          <div class="item-note">孕期最推薦的保濕成分，大分子不穿透皮膚屏障，安全性高，可大量使用。</div>
+        </div>
+        <span class="item-badge badge-safe">✓ 安全</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-safe">🌿</div>
+        <div class="item-text">
+          <div class="item-name">積雪草萃取</div>
+          <div class="item-inci">Centella Asiatica · Cica</div>
+          <div class="item-note">天然修護成分，幫助膠原蛋白合成，孕期肚皮保養的好選擇，有助預防孕紋。</div>
+        </div>
+        <span class="item-badge badge-safe">✓ 安全</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-safe">🧈</div>
+        <div class="item-text">
+          <div class="item-name">乳木果油</div>
+          <div class="item-inci">Shea Butter</div>
+          <div class="item-note">高度滋潤，孕期可大量用於肚皮、胸部、大腿，預防孕紋效果佳。</div>
+        </div>
+        <span class="item-badge badge-safe">✓ 安全</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-safe">✨</div>
+        <div class="item-text">
+          <div class="item-name">菸鹼醯胺 + 維他命C</div>
+          <div class="item-inci">Niacinamide · Ascorbic Acid</div>
+          <div class="item-note">孕期友善美白組合，可改善孕斑、調節膚色，替代對苯二酚的最佳選擇。</div>
+        </div>
+        <span class="item-badge badge-safe">✓ 安全</span>
+      </div>
+      <div class="ingredient-item">
+        <div class="item-icon icon-safe">☀️</div>
+        <div class="item-text">
+          <div class="item-name">物理防曬（氧化鋅）</div>
+          <div class="item-inci">Zinc Oxide · Titanium Dioxide</div>
+          <div class="item-note">不穿透皮膚，孕期防曬首選，完全取代化學防曬成分的安全選擇。</div>
+        </div>
+        <span class="item-badge badge-safe">✓ 安全</span>
+      </div>
+    </div>
+    <div class="card-footer-strip">
+      <span class="footer-brand">Maternea 媽咪莉娜</span>
+      <span class="footer-page">圖卡 4 / 5</span>
+    </div>
+  </div>
+
+  <!-- CARD 5: Tips -->
+  <div class="card" id="c-tip">
+    <div class="card-tip">
+      <div>
+        <div class="tip-eyebrow">使用提醒 · Maternea 媽咪莉娜</div>
+        <div class="tip-title">怎麼用這份清單<br>對照你的保養品？</div>
+        <ul class="tip-list">
+          <li>翻到你保養品的成分表，通常印在瓶底或包裝背面</li>
+          <li>找找看有沒有「禁用成分」欄位的成分名稱（中英文都要查）</li>
+          <li>有的話先停用，找孕期安全的替代品</li>
+          <li>不確定的成分，留言問我，我幫你查</li>
+          <li>孕期保養重點是：保濕＋安全，不是功效越多越好</li>
+          <li>每個人體質不同，若有疑慮請諮詢婦產科醫師</li>
+        </ul>
+      </div>
+      <div class="tip-cta">
+        <div class="tip-cta-main">Maternea 全系列不含任何禁用成分</div>
+        <div class="tip-cta-sub">專為孕期設計 · 每個成分都安全把關</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showAll() {
+  document.querySelectorAll('.card').forEach(c => c.style.display = '');
+  document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+function showOne(id) {
+  document.querySelectorAll('.card').forEach(c => c.style.display = 'none');
+  document.getElementById(id).style.display = '';
+  document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
